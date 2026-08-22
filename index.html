@@ -164,7 +164,7 @@
 
     .seg {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     }
 
@@ -431,6 +431,7 @@
           <select id="layout">
             <option value="six-square">六宫格正方形</option>
             <option value="four-vertical">四宫格竖版</option>
+            <option value="recommend-poster">推荐合集海报</option>
             <option value="auto">自动网格</option>
             <option value="square">九宫格方图</option>
             <option value="vertical">竖版长图</option>
@@ -479,6 +480,14 @@
         <div class="field-row">
           <label for="bgColor">背景色</label>
           <input id="bgColor" type="color" value="#ffffff">
+        </div>
+        <div class="field">
+          <label for="posterSubtitle">海报小标题</label>
+          <input id="posterSubtitle" type="text" value="今日推荐">
+        </div>
+        <div class="field">
+          <label for="posterTitle">海报主标题</label>
+          <input id="posterTitle" type="text" value="豆妈好物合集">
         </div>
         <div class="field">
           <label for="fitMode">图片填充</label>
@@ -537,6 +546,7 @@
         <div class="seg" aria-label="快速版式">
           <button type="button" data-layout-pick="six-square" aria-pressed="true">六宫格</button>
           <button type="button" data-layout-pick="four-vertical" aria-pressed="false">四宫格</button>
+          <button type="button" data-layout-pick="recommend-poster" aria-pressed="false">海报</button>
         </div>
       </div>
       <div class="canvas-wrap" id="canvasWrap">
@@ -576,6 +586,8 @@
       paddingValue: document.getElementById("paddingValue"),
       radius: document.getElementById("radius"),
       bgColor: document.getElementById("bgColor"),
+      posterSubtitle: document.getElementById("posterSubtitle"),
+      posterTitle: document.getElementById("posterTitle"),
       fitMode: document.getElementById("fitMode"),
       selectedLabel: document.getElementById("selectedLabel"),
       adjustEmpty: document.getElementById("adjustEmpty"),
@@ -618,6 +630,17 @@
         radius: 26,
         fitMode: "cover",
         bgColor: "#ffffff"
+      },
+      "recommend-poster": {
+        ratio: "4:5",
+        columns: 3,
+        gap: 12,
+        padding: 12,
+        radius: 18,
+        fitMode: "cover",
+        bgColor: "#ffffff",
+        posterSubtitle: "今日推荐",
+        posterTitle: "豆妈好物合集"
       }
     };
 
@@ -652,6 +675,8 @@
         padding: Number(els.padding.value),
         radius: clamp(Number(els.radius.value) || 0, 0, 80),
         bgColor: els.bgColor.value,
+        posterSubtitle: els.posterSubtitle.value.trim() || "今日推荐",
+        posterTitle: els.posterTitle.value.trim() || "豆妈好物合集",
         fitMode: els.fitMode.value
       };
     }
@@ -704,6 +729,8 @@
       els.radius.value = preset.radius;
       els.fitMode.value = preset.fitMode;
       els.bgColor.value = preset.bgColor;
+      if (preset.posterSubtitle) els.posterSubtitle.value = preset.posterSubtitle;
+      if (preset.posterTitle) els.posterTitle.value = preset.posterTitle;
     }
 
     function setLayout(value) {
@@ -718,6 +745,7 @@
     function getGrid(count, settings) {
       if (settings.layout === "six-square") return { cols: 3, rows: 2, limit: 6, expected: 6 };
       if (settings.layout === "four-vertical") return { cols: 2, rows: 2, limit: 4, expected: 4 };
+      if (settings.layout === "recommend-poster") return { cols: 3, rows: 2, limit: 6, expected: 6, header: true };
       if (settings.layout === "vertical") return { cols: 1, rows: count };
       if (settings.layout === "horizontal") return { cols: count, rows: 1 };
       if (settings.layout === "columns") {
@@ -762,6 +790,139 @@
       ctx.arcTo(x, y + h, x, y, radius);
       ctx.arcTo(x, y, x + w, y, radius);
       ctx.closePath();
+    }
+
+    function fillRoundedRect(x, y, w, h, r, fillStyle) {
+      ctx.save();
+      ctx.fillStyle = fillStyle;
+      roundedClip(x, y, w, h, r);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function getFitFontSize(text, startSize, minSize, maxWidth, weight = 900) {
+      let size = startSize;
+      do {
+        ctx.font = `${weight} ${size}px "Microsoft YaHei", "PingFang SC", sans-serif`;
+        if (ctx.measureText(text).width <= maxWidth || size <= minSize) return size;
+        size -= 4;
+      } while (size > minSize);
+      return minSize;
+    }
+
+    function drawOutlinedText(text, x, y, maxWidth, startSize, minSize) {
+      if (!text) return;
+      const size = getFitFontSize(text, startSize, minSize, maxWidth, 900);
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `900 ${size}px "Microsoft YaHei", "PingFang SC", sans-serif`;
+      ctx.lineJoin = "round";
+      ctx.miterLimit = 2;
+
+      ctx.strokeStyle = "#f0c51d";
+      ctx.lineWidth = Math.max(8, size * .18);
+      ctx.strokeText(text, x, y + size * .12, maxWidth);
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = Math.max(12, size * .24);
+      ctx.strokeText(text, x, y, maxWidth);
+
+      ctx.strokeStyle = "#1f1f1f";
+      ctx.lineWidth = Math.max(5, size * .08);
+      ctx.strokeText(text, x, y, maxWidth);
+
+      ctx.fillStyle = "#222222";
+      ctx.fillText(text, x, y, maxWidth);
+      ctx.restore();
+    }
+
+    function drawPosterMascot(x, y, size) {
+      const s = size;
+      ctx.save();
+      ctx.translate(x, y);
+      fillRoundedRect(s * .08, s * .52, s * .84, s * .42, s * .18, "#fff0d6");
+      ctx.fillStyle = "#2d2b29";
+      ctx.beginPath();
+      ctx.arc(s * .5, s * .32, s * .25, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = "#f7d7bd";
+      ctx.beginPath();
+      ctx.arc(s * .5, s * .42, s * .25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#84c5e6";
+      ctx.lineWidth = s * .07;
+      ctx.beginPath();
+      ctx.arc(s * .5, s * .31, s * .28, Math.PI * 1.05, Math.PI * 1.95);
+      ctx.stroke();
+      ctx.fillStyle = "#2c2926";
+      ctx.beginPath();
+      ctx.arc(s * .42, s * .42, s * .025, 0, Math.PI * 2);
+      ctx.arc(s * .58, s * .42, s * .025, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#e88781";
+      ctx.beginPath();
+      ctx.arc(s * .36, s * .49, s * .05, 0, Math.PI * 2);
+      ctx.arc(s * .64, s * .49, s * .05, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#2c2926";
+      ctx.lineWidth = s * .016;
+      ctx.beginPath();
+      ctx.arc(s * .5, s * .48, s * .055, 0, Math.PI);
+      ctx.stroke();
+      fillRoundedRect(s * .68, s * .42, s * .14, s * .25, s * .035, "#2c2c2c");
+      ctx.fillStyle = "#f7d7bd";
+      ctx.beginPath();
+      ctx.arc(s * .67, s * .64, s * .055, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawPosterHeader(settings, size, x, y, w, h) {
+      const radius = Math.min(settings.radius + 10, 34);
+      const gradient = ctx.createLinearGradient(x, y, x + w, y + h);
+      gradient.addColorStop(0, "#f7a477");
+      gradient.addColorStop(1, "#f6b184");
+      fillRoundedRect(x, y, w, h, radius, gradient);
+
+      const tagSize = Math.min(h * .25, w * .085);
+      const tagX = x + w * .19;
+      const tagY = y + h * .2;
+      fillRoundedRect(tagX, tagY, tagSize, tagSize, tagSize * .22, "#242424");
+      fillRoundedRect(tagX + tagSize * .12, tagY + tagSize * .12, tagSize * .76, tagSize * .76, tagSize * .16, "#ffd72a");
+      ctx.save();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.moveTo(tagX + tagSize * .33, tagY + tagSize * .5);
+      ctx.lineTo(tagX + tagSize * .58, tagY + tagSize * .28);
+      ctx.lineTo(tagX + tagSize * .58, tagY + tagSize * .43);
+      ctx.lineTo(tagX + tagSize * .73, tagY + tagSize * .43);
+      ctx.lineTo(tagX + tagSize * .73, tagY + tagSize * .57);
+      ctx.lineTo(tagX + tagSize * .58, tagY + tagSize * .57);
+      ctx.lineTo(tagX + tagSize * .58, tagY + tagSize * .72);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      const subX = tagX + tagSize + w * .035;
+      const subSize = getFitFontSize(settings.posterSubtitle, h * .16, h * .09, w * .36, 800);
+      ctx.save();
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      ctx.font = `800 ${subSize}px "Microsoft YaHei", "PingFang SC", sans-serif`;
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = subSize * .26;
+      ctx.strokeText(settings.posterSubtitle, subX, tagY + tagSize * .5, w * .36);
+      ctx.strokeStyle = "#1f1f1f";
+      ctx.lineWidth = subSize * .07;
+      ctx.strokeText(settings.posterSubtitle, subX, tagY + tagSize * .5, w * .36);
+      ctx.fillStyle = "#222222";
+      ctx.fillText(settings.posterSubtitle, subX, tagY + tagSize * .5, w * .36);
+      ctx.restore();
+
+      drawPosterMascot(x + w * .68, y + h * .05, h * .58);
+      drawOutlinedText(settings.posterTitle, x + w * .47, y + h * .68, w * .76, h * .27, h * .13);
     }
 
     function drawFittedImage(item, x, y, w, h, settings) {
@@ -852,10 +1013,19 @@
       ctx.fillStyle = settings.bgColor;
       ctx.fillRect(0, 0, size.width, size.height);
 
+      const isPoster = settings.layout === "recommend-poster";
+      const headerH = isPoster ? Math.round(size.height * .32) : 0;
+      const gridTop = isPoster
+        ? settings.padding + headerH + settings.gap
+        : settings.padding;
       const innerW = size.width - settings.padding * 2;
-      const innerH = size.height - settings.padding * 2;
+      const innerH = size.height - gridTop - settings.padding;
       const cellW = (innerW - settings.gap * (grid.cols - 1)) / grid.cols;
       const cellH = (innerH - settings.gap * (grid.rows - 1)) / grid.rows;
+
+      if (isPoster) {
+        drawPosterHeader(settings, size, settings.padding, settings.padding, innerW, headerH);
+      }
 
       state.images.forEach((item, index) => {
         if (grid.limit && index >= grid.limit) return;
@@ -863,7 +1033,7 @@
         const row = Math.floor(index / grid.cols);
         if (row >= grid.rows) return;
         const x = settings.padding + col * (cellW + settings.gap);
-        const y = settings.padding + row * (cellH + settings.gap);
+        const y = gridTop + row * (cellH + settings.gap);
         drawFittedImage(item, x, y, cellW, cellH, settings);
         state.cellRects.push({ id: item.id, x, y, w: cellW, h: cellH });
       });
@@ -1226,6 +1396,8 @@
       els.padding,
       els.radius,
       els.bgColor,
+      els.posterSubtitle,
+      els.posterTitle,
       els.fitMode
     ].forEach(control => control.addEventListener("input", event => {
       if (event.currentTarget === els.layout) {
