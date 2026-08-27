@@ -23,9 +23,13 @@
   }catch(e){}
   return '#f87278';
 }
-function coverOldBadgeNumber(w,h,st){
+function coverOldBadgeNumber(txt,w,h,st,fs){
   const scale=(st.badgeScale||100)/100,cx=w/2+(st.badgeX||0),cy=h*.92+(st.badgeY||0);
-  const pw=w*.126*Math.max(1,scale),ph=w*.096*Math.max(1,scale),red=sampleBadgeRed(cx,cy,w*.34,w*.15);
+  ctx.save();
+  ctx.font='italic 900 '+fs+'px Arial Black, Impact, Microsoft YaHei, sans-serif';
+  const textW=ctx.measureText(txt||'12').width;
+  ctx.restore();
+  const pw=Math.max(textW*1.24,w*.058*scale),ph=fs*1.14,red=sampleBadgeRed(cx,cy,w*.34,w*.15);
   ctx.save();
   ctx.translate(cx,cy);
   ctx.rotate(-0.055);
@@ -46,7 +50,7 @@ function coverOldBadgeNumber(w,h,st){
 function drawBadgeTemplate(txt,w,h,st){
   if(!txt)return;
   const scale=(st.badgeScale||100)/100,cx=w/2+(st.badgeX||0),cy=h*.92+(st.badgeY||0),fs=Math.round(w*.068*scale);
-  coverOldBadgeNumber(w,h,st);
+  coverOldBadgeNumber(txt,w,h,st,fs);
   ctx.save();
   ctx.globalAlpha=clamp((st.badgeOpacity??100)/100,0,1);
   ctx.translate(cx,cy);
