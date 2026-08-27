@@ -25,20 +25,24 @@
 }
 function coverOldBadgeNumber(w,h,st){
   const scale=(st.badgeScale||100)/100,cx=w/2+(st.badgeX||0),cy=h*.92+(st.badgeY||0);
-  const pw=w*.094*Math.max(1,scale),ph=w*.074*Math.max(1,scale),red=sampleBadgeRed(cx,cy,w*.34,w*.15);
+  const pw=w*.142*Math.max(1,scale),ph=w*.104*Math.max(1,scale),red=sampleBadgeRed(cx,cy,w*.34,w*.15);
   ctx.save();
   ctx.translate(cx,cy);
   ctx.rotate(-0.055);
   ctx.fillStyle=red;
-  ctx.globalAlpha=.82;
-  ctx.filter='blur('+Math.max(1,w*.006)+'px)';
+  ctx.globalAlpha=.78;
+  ctx.filter='blur('+Math.max(1,w*.007)+'px)';
   ctx.beginPath();
-  ctx.ellipse(0,0,pw*.56,ph*.45,0,0,Math.PI*2);
+  ctx.ellipse(0,0,pw*.58,ph*.47,0,0,Math.PI*2);
   ctx.fill();
   ctx.filter='none';
-  ctx.globalAlpha=.96;
+  ctx.globalAlpha=.94;
   ctx.beginPath();
-  ctx.ellipse(0,0,pw*.47,ph*.37,0,0,Math.PI*2);
+  ctx.ellipse(0,0,pw*.50,ph*.39,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha=.98;
+  ctx.beginPath();
+  ctx.ellipse(0,0,pw*.38,ph*.28,0,0,Math.PI*2);
   ctx.fill();
   ctx.restore();
 }
