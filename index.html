@@ -25,7 +25,7 @@
 }
 function coverOldBadgeNumber(w,h,st){
   const scale=(st.badgeScale||100)/100,cx=w/2+(st.badgeX||0),cy=h*.92+(st.badgeY||0);
-  const pw=w*.118*Math.max(1,scale),ph=w*.088*Math.max(1,scale),red=sampleBadgeRed(cx,cy,w*.34,w*.15);
+  const pw=w*.126*Math.max(1,scale),ph=w*.088*Math.max(1,scale),red=sampleBadgeRed(cx,cy,w*.34,w*.15);
   ctx.save();
   ctx.translate(cx,cy);
   ctx.rotate(-0.055);
